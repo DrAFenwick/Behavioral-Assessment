@@ -1,0 +1,139 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+<meta charset="UTF-8">\
+<meta name="viewport" content="width=device-width, initial-scale=1.0">\
+<title>Behavioral Awareness Assessment</title>\
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>\
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>\
+<style>\
+  body \{ font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; \}\
+  h1, h2 \{ text-align: center; \}\
+  .question \{ margin-bottom: 15px; \}\
+  .category \{ margin-bottom: 25px; \}\
+  input[type=range] \{ width: 100%; margin: 5px 0 15px 0; \}\
+  #progress \{ width: 100%; background-color: #eee; height: 20px; border-radius: 10px; overflow: hidden; margin-bottom: 20px;\}\
+  #progress-bar \{ height: 100%; width: 0%; background-color: #4caf50; text-align: center; color: white; line-height: 20px; transition: width 0.3s; \}\
+  button \{ padding: 10px 20px; font-size: 16px; margin-top: 20px; display: block; margin-left: auto; margin-right: auto; cursor: pointer; \}\
+  #results \{ display: none; text-align:center; \}\
+</style>\
+</head>\
+<body>\
+\
+<h1>Behavioral Awareness Assessment</h1>\
+<div id="progress"><div id="progress-bar">0%</div></div>\
+\
+<form id="assessmentForm">\
+\
+<!-- Category example (repeat for all) -->\
+<div class="category">\
+  <h2>Interaction Style</h2>\
+  <div class="question">1. I enjoy collaborating with others and seeking input before making decisions.</div>\
+  <input type="range" name="q1" min="1" max="5" value="3" step="1"><span id="q1Value">3</span><br>\
+\
+  <div class="question">2. I find it easy to influence or motivate people through conversation.</div>\
+  <input type="range" name="q2" min="1" max="5" value="3" step="1"><span id="q2Value">3</span><br>\
+\
+  <div class="question">3. I tend to withdraw when conflicts arise.</div>\
+  <input type="range" name="q3" min="1" max="5" value="3" step="1"><span id="q3Value">3</span><br>\
+\
+  <div class="question">4. I often challenge ideas or processes that I believe are inefficient.</div>\
+  <input type="range" name="q4" min="1" max="5" value="3" step="1"><span id="q4Value">3</span><br>\
+</div>\
+\
+<!-- Repeat categories for Emotional & Energy, Decision-Making & Focus, Social & Work Preferences -->\
+<!-- For brevity, assume questions q5 to q16 follow same structure -->\
+\
+<button type="button" onclick="calculateResults()">Submit Assessment</button>\
+</form>\
+\
+<div id="results">\
+  <h2>Your Behavioral Profile</h2>\
+  <p id="overallFeedback"></p>\
+  <canvas id="categoryChart" width="400" height="200"></canvas>\
+  <button onclick="downloadPDF()">Download PDF Summary</button>\
+</div>\
+\
+<script>\
+const totalQuestions = 16;\
+\
+// Update slider value display\
+document.querySelectorAll('input[type=range]').forEach(slider => \{\
+  slider.addEventListener('input', (e)=>\{\
+    document.getElementById(slider.name+'Value').textContent = slider.value;\
+    updateProgress();\
+  \});\
+\});\
+\
+function updateProgress() \{\
+  let answered = 0;\
+  document.querySelectorAll('input[type=range]').forEach(s=> \{ if(s.value) answered++; \});\
+  let percent = Math.round((answered / totalQuestions) * 100);\
+  document.getElementById('progress-bar').style.width = percent + '%';\
+  document.getElementById('progress-bar').textContent = percent + '%';\
+\}\
+\
+function calculateResults() \{\
+  const form = document.getElementById('assessmentForm');\
+  let scores = \{interaction:0, energy:0, decision:0, social:0\};\
+\
+  for(let i=1;i<=16;i++)\{\
+    let val = parseInt(form['q'+i].value || 3);\
+    if(i<=4) scores.interaction += val;\
+    else if(i<=8) scores.energy += val;\
+    else if(i<=12) scores.decision += val;\
+    else scores.social += val;\
+  \}\
+\
+  let totalScore = scores.interaction + scores.energy + scores.decision + scores.social;\
+\
+  // Determine feedback\
+  let feedback = '';\
+  let suggestions = '';\
+  if(totalScore <= 25) \{ feedback="Reserved & Observant"; suggestions="Focus on engaging with peers and sharing ideas.";\}\
+  else if(totalScore <= 40) \{ feedback="Balanced & Adaptive"; suggestions="Maintain flexibility and consider areas to take initiative.";\}\
+  else if(totalScore <= 55) \{ feedback="Energetic & Influential"; suggestions="Use your influence wisely and listen actively.";\}\
+  else \{ feedback="Dynamic & High-Impact"; suggestions="Balance your energy and consider others' perspectives.";\}\
+\
+  document.getElementById('assessmentForm').style.display = 'none';\
+  document.getElementById('results').style.display = 'block';\
+  document.getElementById('overallFeedback').innerHTML = `Total Score: $\{totalScore\} \'97 $\{feedback\}<br>$\{suggestions\}`;\
+\
+  // Draw chart\
+  const ctx = document.getElementById('categoryChart').getContext('2d');\
+  new Chart(ctx, \{\
+    type: 'bar',\
+    data: \{\
+      labels: ['Interaction', 'Energy', 'Decision', 'Social'],\
+      datasets: [\{\
+        label: 'Category Scores',\
+        data: [scores.interaction, scores.energy, scores.decision, scores.social],\
+        backgroundColor: ['#4caf50','#2196f3','#ff9800','#9c27b0']\
+      \}]\
+    \},\
+    options: \{ scales: \{ y: \{ beginAtZero:true \} \} \}\
+  \});\
+\}\
+\
+// PDF download function\
+function downloadPDF() \{\
+  const \{ jsPDF \} = window.jspdf;\
+  let doc = new jsPDF();\
+  let feedback = document.getElementById('overallFeedback').innerText;\
+  doc.setFontSize(16);\
+  doc.text("Behavioral Awareness Assessment Summary", 10, 20);\
+  doc.setFontSize(12);\
+  doc.text(feedback, 10, 40);\
+  doc.save("Behavioral_Assessment_Summary.pdf");\
+\}\
+</script>\
+\
+</body>\
+</html>}
